@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRIDEIQ</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0b0d;
+  --surface:  #111318;
+  --border:   rgba(255,255,255,0.07);
+  --text:     #f0f2f5;
+  --muted:    #4d5a6a;
+  --faint:    #1e232b;
+  --green:    #00e896;
+  --green-bg: rgba(0,232,150,0.1);
+  --amber:    #f5a623;
+  --amber-bg: rgba(245,166,35,0.1);
+  --red:      #ff4757;
+  --red-bg:   rgba(255,71,87,0.1);
+  --font:     'DM Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+  --nav-w:    200px;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; overflow: hidden; }
+
+.shell { display: flex; height: 100vh; }
+
+/* NAV */
+nav {
+  width: var(--nav-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0;
+  padding: 28px 0 20px;
+}
+.brand { padding: 0 24px 28px; border-bottom: 1px solid var(--border); }
+.brand-name { font-size: 17px; font-weight: 500; letter-spacing: -0.3px; }
+.brand-name em { font-style: normal; color: var(--green); }
+.brand-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.nav-links { flex: 1; padding: 16px 0; }
+.nav-group { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 12px 24px 4px; }
+.nav-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 24px; font-size: 13px; font-weight: 400;
+  color: var(--muted); cursor: pointer; transition: color 0.12s;
+  border: none; background: none; width: 100%; text-align: left; font-family: var(--font);
+}
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--text); font-weight: 500; }
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; flex-shrink: 0; transition: background 0.12s; }
+.nav-link.active .nav-dot { background: var(--green); }
+
+.nav-footer { padding: 16px 24px 0; border-top: 1px solid var(--border); }
+.athlete-row { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+.athlete-name { font-size: 12px; font-weight: 500; }
+.athlete-event { font-size: 11px; color: var(--muted); }
+.form-badge { margin-left: auto; font-size: 13px; font-weight: 500; color: var(--green); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 36px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.page-title { font-size: 16px; font-weight: 500; }
+.page-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font); transition: opacity 0.12s; }
+.btn:hover { opacity: 0.8; }
+.btn-dark { background: var(--text); color: var(--bg); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+.content { flex: 1; overflow-y: auto; padding: 32px 36px; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* PAGES */
+.page { display: none; animation: fi 0.18s ease; }
+.page.active { display: block; }
+@keyframes fi { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* STATS */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 28px; }
+.stat { background: var(--surface); padding: 20px 22px; }
+.stat-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.stat-val { font-size: 26px; font-weight: 300; font-family: var(--mono); letter-spacing: -1px; line-height: 1; }
+.stat-val sup { font-size: 13px; font-weight: 400; vertical-align: super; }
+.stat-delta { font-size: 11px; margin-top: 6px; }
+.up { color: var(--green); } .down { color: var(--red); } .neutral { color: var(--muted); }
+
+/* SECTIONS */
+.sec { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+/* SPLITS */
+.split-list { display: flex; flex-direction: column; }
+.split-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.split-item:last-child { border-bottom: none; }
+.split-rep { font-size: 11px; color: var(--muted); width: 36px; flex-shrink: 0; }
+.split-bar-bg { flex: 1; height: 2px; background: var(--faint); border-radius: 1px; }
+.split-bar-fill { height: 2px; border-radius: 1px; }
+.split-t { font-family: var(--mono); font-size: 13px; width: 36px; text-align: right; flex-shrink: 0; }
+
+/* FACTOR ROWS */
+.factor-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.factor-row:last-child { border-bottom: none; }
+.factor-name { font-size: 12px; color: var(--muted); width: 80px; flex-shrink: 0; }
+.factor-track { flex: 1; height: 2px; background: var(--faint); border-radius: 1px; }
+.factor-bar { height: 2px; border-radius: 1px; }
+.factor-val { font-family: var(--mono); font-size: 12px; width: 48px; text-align: right; flex-shrink: 0; }
+
+/* BADGES */
+.badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; letter-spacing: 0.03em; }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); }
+.badge-faint { background: var(--faint); color: var(--muted); }
+
+/* INSIGHTS */
+.insight { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.insight:last-child { border-bottom: none; }
+.insight-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.insight-text { font-size: 13px; color: var(--text); line-height: 1.6; flex: 1; }
+.insight-text strong { color: var(--green); font-weight: 500; }
+.insight-text.warn strong { color: var(--amber); }
+.insight-meta { font-size: 11px; color: var(--muted); }
+
+/* WORKOUTS */
+.workout { padding: 18px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.workout:first-child { padding-top: 4px; }
+.workout:last-child { border-bottom: none; }
+.workout:hover .workout-name { color: var(--green); }
+.workout-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; gap: 12px; }
+.workout-name { font-size: 14px; font-weight: 500; transition: color 0.12s; }
+.workout-tags { display: flex; gap: 5px; flex-shrink: 0; }
+.workout-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.workout-chips { display: flex; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 11px; color: var(--text); background: var(--faint); padding: 4px 10px; border-radius: 4px; }
+.chip-label { display: block; font-family: var(--font); font-size: 10px; color: var(--muted); margin-bottom: 1px; }
+
+/* FORMS */
+.form-sec { margin-bottom: 24px; }
+.form-sec-title { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-size: 11px; color: var(--muted); }
+.form-input { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; color: var(--text); font-family: var(--font); outline: none; width: 100%; transition: border-color 0.12s; }
+.form-input:focus { border-color: var(--text); }
+textarea.form-input { resize: vertical; }
+
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { font-size: 12px; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); background: transparent; cursor: pointer; font-family: var(--font); transition: all 0.12s; }
+.pill:hover { border-color: var(--text); color: var(--text); }
+.pill.on { background: var(--text); border-color: var(--text); color: var(--bg); }
+
+.split-inputs { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; }
+.split-in-wrap { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.split-in-label { font-size: 10px; color: var(--muted); }
+.split-in { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 4px; text-align: center; font-family: var(--mono); font-size: 13px; color: var(--text); outline: none; }
+.split-in:focus { border-color: var(--text); }
+
+/* GOAL */
+.goal-hero { padding: 36px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+.goal-num { font-size: 64px; font-weight: 300; font-family: var(--mono); letter-spacing: -3px; line-height: 1; }
+.goal-race { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.goal-countdown { font-size: 13px; color: var(--amber); margin-top: 3px; font-weight: 500; }
+
+.progress-wrap { margin-bottom: 28px; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.progress-track { height: 2px; background: var(--border); border-radius: 1px; }
+.progress-fill { height: 2px; background: var(--green); border-radius: 1px; transition: width 0.8s ease; }
+.progress-pct { font-family: var(--mono); font-size: 28px; font-weight: 400; margin-top: 10px; }
+.progress-sub { font-size: 11px; color: var(--muted); }
+
+.pace-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.pace-cell { background: var(--surface); padding: 16px 18px; }
+.pace-cell-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.pace-cell-val { font-family: var(--mono); font-size: 18px; font-weight: 400; }
+
+.phases { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.phase { flex: 1; padding: 14px 16px; border-right: 1px solid var(--border); background: var(--surface); }
+.phase:last-child { border-right: none; }
+.phase.now { background: var(--green-bg); }
+.phase-wk { font-size: 10px; color: var(--muted); }
+.phase.now .phase-wk { color: var(--green); }
+.phase-name { font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+.phase.now .phase-name { color: var(--green); }
+
+/* HISTORY */
+.session { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.session:last-child { border-bottom: none; }
+.session-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.session-name { font-size: 13px; font-weight: 500; }
+.session-date { font-size: 11px; color: var(--muted); }
+.session-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.session-splits { display: flex; gap: 5px; flex-wrap: wrap; }
+.ssplit { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 4px; background: var(--faint); }
+
+/* CHART */
+.chart-wrap { height: 180px; position: relative; }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(26,25,22,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 460px; max-height: 80vh; overflow-y: auto; transform: translateY(8px); transition: transform 0.18s; }
+.overlay.open .modal { transform: none; }
+.modal-title { font-size: 16px; font-weight: 500; margin-bottom: 2px; }
+.modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+.modal-close { float: right; background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; margin: -4px -4px 0 0; line-height: 1; }
+.modal-close:hover { color: var(--text); }
+.modal-chips { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+.modal-chip { background: var(--faint); border-radius: 6px; padding: 10px 12px; }
+.modal-chip-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.modal-chip-val { font-family: var(--mono); font-size: 15px; }
+.modal-note { font-size: 12px; color: var(--muted); line-height: 1.7; padding: 14px 16px; background: var(--faint); border-radius: 6px; }
+
+/* ALERT */
+.alert { font-size: 12px; padding: 10px 14px; border-radius: 6px; margin-top: 12px; line-height: 1.5; }
+.alert-red { background: var(--red-bg); color: var(--red); }
+.alert-green { background: var(--green-bg); color: var(--green); }
+.alert-amber { background: var(--amber-bg); color: var(--amber); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 6px; font-size: 13px; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 200; }
+.toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- NAV -->
+<nav>
+  <div class="brand">
+    <div class="brand-name">Stride<em>IQ</em></div>
+    <div class="brand-sub">Track intelligence</div>
+  </div>
+  <div class="nav-links">
+    <div class="nav-group">Training</div>
+    <button class="nav-link active" data-page="dashboard"><span class="nav-dot"></span>Dashboard</button>
+    <button class="nav-link" data-page="log"><span class="nav-dot"></span>Log Workout</button>
+    <button class="nav-link" data-page="library"><span class="nav-dot"></span>Workout Library</button>
+    <button class="nav-link" data-page="history"><span class="nav-dot"></span>History</button>
+    <div class="nav-group" style="margin-top:8px;">Performance</div>
+    <button class="nav-link" data-page="insights"><span class="nav-dot"></span>AI Insights</button>
+    <button class="nav-link" data-page="goal"><span class="nav-dot"></span>Race Goal</button>
+    <div class="nav-group" style="margin-top:8px;">Wellness</div>
+    <button class="nav-link" data-page="factors"><span class="nav-dot"></span>Factors Log</button>
+  </div>
+  <div class="nav-footer">
+    <div class="athlete-row">
+      <div class="avatar">AJ</div>
+      <div>
+        <div class="athlete-name">Alex Johnson</div>
+        <div class="athlete-event">800m · 1500m</div>
+      </div>
+      <div class="form-badge" id="nav-score">82</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="t-title">Dashboard</div>
+      <div class="page-sub" id="t-sub">Wednesday, March 18</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="showPage('factors')">Log factors</button>
+      <button class="btn btn-dark" onclick="showPage('log')">+ Log workout</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stat-row">
+        <div class="stat"><div class="stat-label">Last 400m split</div><div class="stat-val">58<sup>.4s</sup></div><div class="stat-delta up">↑ 0.8s faster than avg</div></div>
+        <div class="stat"><div class="stat-label">Sessions this week</div><div class="stat-val">4<sup> /5</sup></div><div class="stat-delta neutral">On target</div></div>
+        <div class="stat"><div class="stat-label">Avg sleep (7d)</div><div class="stat-val">7<sup>.2h</sup></div><div class="stat-delta down">↓ 0.5h below target</div></div>
+        <div class="stat"><div class="stat-label">Goal pace</div><div class="stat-val">1<sup>:58</sup></div><div class="stat-delta neutral">42 days out</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="sec">Last session — 6×400m</div>
+          <div class="split-list">
+            <div class="split-item"><span class="split-rep">Rep 1</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:88%;background:var(--green)"></div></div><span class="split-t">62.1</span></div>
+            <div class="split-item"><span class="split-rep">Rep 2</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:90%;background:var(--green)"></div></div><span class="split-t">61.4</span></div>
+            <div class="split-item"><span class="split-rep">Rep 3</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:92%;background:var(--green)"></div></div><span class="split-t">61.0</span></div>
+            <div class="split-item"><span class="split-rep">Rep 4</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:89%;background:var(--muted)"></div></div><span class="split-t">61.7</span></div>
+            <div class="split-item"><span class="split-rep">Rep 5</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:84%;background:var(--amber)"></div></div><span class="split-t">62.8</span></div>
+            <div class="split-item"><span class="split-rep">Rep 6</span><div class="split-bar-bg"><div class="split-bar-fill" style="width:78%;background:var(--red)"></div></div><span class="split-t">63.9</span></div>
+          </div>
+          <div class="alert alert-red">Fade detected — Rep 6 was 2.9s slower than Rep 3.</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="sec">Top AI insight</div>
+            <p style="font-size:13px;line-height:1.7;margin-bottom:10px;">Late-rep fade is <strong style="font-weight:500;color:var(--green)">2.1× worse</strong> on nights under 7 hours sleep. On sessions with 7.5h+ your final rep stayed within 1.2s of your first.</p>
+            <div style="display:flex;align-items:center;gap:8px;"><span class="badge badge-green">High confidence</span><span style="font-size:11px;color:var(--muted);">11 sessions</span></div>
+          </div>
+          <div class="card">
+            <div class="sec">Today's wellness</div>
+            <div class="factor-row"><span class="factor-name">Sleep</span><div class="factor-track"><div class="factor-bar" style="width:72%;background:var(--green)"></div></div><span class="factor-val">7.2 h</span></div>
+            <div class="factor-row"><span class="factor-name">Hydration</span><div class="factor-track"><div class="factor-bar" style="width:80%;background:#4a9eff"></div></div><span class="factor-val">2.4 L</span></div>
+            <div class="factor-row"><span class="factor-name">Soreness</span><div class="factor-track"><div class="factor-bar" style="width:25%;background:var(--green)"></div></div><span class="factor-val">Low</span></div>
+            <div class="factor-row"><span class="factor-name">HRV</span><div class="factor-track"><div class="factor-bar" style="width:68%;background:#4a9eff"></div></div><span class="factor-val">68 ms</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec">Performance trend — 400m avg split</div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- LOG WORKOUT -->
+    <div id="page-log" class="page">
+      <div class="grid2" style="gap:24px;align-items:start;">
+        <div>
+          <div class="form-sec">
+            <div class="form-sec-title">Workout Type</div>
+            <div class="pill-row">
+              <div class="pill on" data-g="type">Intervals</div><div class="pill" data-g="type">Tempo</div><div class="pill" data-g="type">Reps</div><div class="pill" data-g="type">Easy run</div><div class="pill" data-g="type">Time trial</div><div class="pill" data-g="type">Race</div><div class="pill" data-g="type">Drills</div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Session Details</div>
+            <div class="form-grid" style="margin-bottom:10px;">
+              <div class="form-group"><label class="form-label">Distance per rep</label><select class="form-input"><option>200m</option><option>300m</option><option selected>400m</option><option>600m</option><option>800m</option><option>1000m</option><option>1200m</option></select></div>
+              <div class="form-group"><label class="form-label">Number of reps</label><select class="form-input"><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>8</option><option>10</option></select></div>
+              <div class="form-group"><label class="form-label">Rest type</label><select class="form-input"><option>Full rest (walk)</option><option selected>Jog recovery</option><option>Timed rest</option></select></div>
+              <div class="form-group"><label class="form-label">Rest duration</label><select class="form-input"><option>60 sec</option><option selected>90 sec</option><option>2 min</option><option>3 min</option><option>5 min</option></select></div>
+              <div class="form-group"><label class="form-label">Surface</label><select class="form-input"><option selected>Track (400m)</option><option>Road</option><option>Trail</option><option>Treadmill</option></select></div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Individual Splits (seconds)</div>
+            <div class="split-inputs">
+              <div class="split-in-wrap"><div class="split-in-label">Rep 1</div><input class="split-in" type="text" value="62.1"></div>
+              <div class="split-in-wrap"><div class="split-in-label">Rep 2</div><input class="split-in" type="text" value="61.4"></div>
+              <div class="split-in-wrap"><div class="split-in-label">Rep 3</div><input class="split-in" type="text" value="61.0"></div>
+              <div class="split-in-wrap"><div class="split-in-label">Rep 4</div><input class="split-in" type="text" value="61.7"></div>
+              <div class="split-in-wrap"><div class="split-in-label">Rep 5</div><input class="split-in" type="text" value="62.8"></div>
+              <div class="split-in-wrap"><div class="split-in-label">Rep 6</div><input class="split-in" type="text" value="63.9"></div>
+            </div>
+          </div>
+          <div class="form-sec"><div class="form-group"><label class="form-label">Post-workout notes</label><textarea class="form-input" rows="3" placeholder="Legs felt heavy from Tuesday... weather was humid..."></textarea></div></div>
+          <button class="btn btn-dark" style="width:100%;justify-content:center;padding:10px 0;" onclick="showToast('Workout saved.')">Save Workout</button>
+        </div>
+        <div>
+          <div class="form-sec">
+            <div class="form-sec-title">Pre-Workout Factors</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Sleep last night (hrs)</label><input class="form-input" type="number" step="0.5" value="7.5"></div>
+              <div class="form-group"><label class="form-label">Sleep quality</label><select class="form-input"><option>Poor</option><option>Fair</option><option selected>Good</option><option>Excellent</option></select></div>
+              <div class="form-group"><label class="form-label">Hydration (L today)</label><input class="form-input" type="number" step="0.1" value="2.5"></div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Nutrition</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Meal timing</label><select class="form-input"><option>Fasted</option><option>&lt;60 min prior</option><option selected>60–90 min prior</option><option>90–120 min prior</option><option>120+ min prior</option></select></div>
+              <div class="form-group"><label class="form-label">Est. carbs (g)</label><input class="form-input" type="number" value="180"></div>
+              <div class="form-group"><label class="form-label">Est. protein (g)</label><input class="form-input" type="number" value="25"></div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Body Readiness</div>
+            <div class="pill-row">
+              <div class="pill" data-g="soreness">No soreness</div><div class="pill on" data-g="soreness">Mild soreness</div><div class="pill" data-g="soreness">Heavy legs</div><div class="pill" data-g="soreness">Injury concern</div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Weather</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Temperature (°F)</label><input class="form-input" type="number" value="64" min="-20" max="120"></div>
+              <div class="form-group"><label class="form-label">Conditions</label><select class="form-input"><option selected>Sunny</option><option>Partly cloudy</option><option>Overcast</option><option>Light rain</option><option>Heavy rain</option><option>Windy</option><option>Snow/Ice</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKOUT LIBRARY -->
+    <div id="page-library" class="page">
+      <div style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;">
+        <div class="pill on" data-g="race">800m</div><div class="pill" data-g="race">400m</div><div class="pill" data-g="race">1500m</div><div class="pill" data-g="race">Mile</div><div class="pill" data-g="race">5K</div>
+      </div>
+      <div class="card">
+        <div class="workout" onclick="openModal('w1')">
+          <div class="workout-top"><span class="workout-name">Speed Endurance 600s</span><div class="workout-tags"><span class="badge badge-faint">Interval</span><span class="badge badge-green">AI pick</span></div></div>
+          <div class="workout-desc">3–4 × 600m at 800m goal pace, 3 min recovery. Builds the endurance to hold race pace through the second 400m.</div>
+          <div class="workout-chips"><div class="chip"><span class="chip-label">Target</span>1:28–1:30</div><div class="chip"><span class="chip-label">Rest</span>3 min</div><div class="chip"><span class="chip-label">Source</span>Daniels</div></div>
+        </div>
+        <div class="workout" onclick="openModal('w2')">
+          <div class="workout-top"><span class="workout-name">Lactate Threshold 1200s</span><div class="workout-tags"><span class="badge badge-faint">Tempo</span><span class="badge badge-green">AI pick</span></div></div>
+          <div class="workout-desc">3 × 1200m at 10K pace, 90 sec rest. Raises lactate threshold so you can sustain faster speeds with less fatigue.</div>
+          <div class="workout-chips"><div class="chip"><span class="chip-label">Target</span>4:48–5:00</div><div class="chip"><span class="chip-label">Rest</span>90 sec</div><div class="chip"><span class="chip-label">Source</span>Lydiard</div></div>
+        </div>
+        <div class="workout" onclick="openModal('w3')">
+          <div class="workout-top"><span class="workout-name">Race Pace 200m Reps</span><div class="workout-tags"><span class="badge badge-faint">Reps</span></div></div>
+          <div class="workout-desc">8–10 × 200m at mile pace, 2 min walk. Develops top-end speed and neuromuscular sharpness without deep fatigue.</div>
+          <div class="workout-chips"><div class="chip"><span class="chip-label">Target</span>28–29s</div><div class="chip"><span class="chip-label">Rest</span>2 min walk</div><div class="chip"><span class="chip-label">Source</span>Bowerman</div></div>
+        </div>
+        <div class="workout" onclick="openModal('w4')">
+          <div class="workout-top"><span class="workout-name">Broken 800 Simulation</span><div class="workout-tags"><span class="badge badge-faint">Interval</span><span class="badge badge-green">AI pick</span></div></div>
+          <div class="workout-desc">400m + 200m + 200m at goal pace, 60 sec between. Race rehearsal — full distance at race pace, with brief rest.</div>
+          <div class="workout-chips"><div class="chip"><span class="chip-label">400m</span>58.5s</div><div class="chip"><span class="chip-label">200m</span>29s</div><div class="chip"><span class="chip-label">Rest</span>60 sec</div></div>
+        </div>
+        <div class="workout" onclick="openModal('w5')">
+          <div class="workout-top"><span class="workout-name">Strides &amp; Acceleration</span><div class="workout-tags"><span class="badge badge-faint">Drills</span></div></div>
+          <div class="workout-desc">6 × 80–100m at 95%, full recovery. Maintains sharpness and running economy. Add onto any easy run day.</div>
+          <div class="workout-chips"><div class="chip"><span class="chip-label">Effort</span>90–95%</div><div class="chip"><span class="chip-label">Rest</span>Full</div><div class="chip"><span class="chip-label">Source</span>Daniels/Canova</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="page-history" class="page">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="sec">Estimated 800m fitness</div>
+        <div class="chart-wrap"><canvas id="fitnessChart"></canvas></div>
+      </div>
+      <div class="card" id="history-list"></div>
+    </div>
+
+    <!-- AI INSIGHTS -->
+    <div id="page-insights" class="page">
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;"><div class="sec" style="margin-bottom:0;">High confidence</div><span style="font-size:11px;color:var(--muted);">8 weeks · 24 sessions</span></div>
+        <div class="insight">
+          <div class="insight-header"><p class="insight-text">Late-rep fade is <strong>2.1× worse</strong> on nights under 7 hours sleep. On sessions with 7.5h+ your final rep stayed within 1.2s of your opening rep.</p><span class="badge badge-green">High</span></div>
+          <div class="insight-meta">14 sessions · sleep vs. late-rep fade · r = 0.81</div>
+        </div>
+        <div class="insight">
+          <div class="insight-header"><p class="insight-text">Sessions with a carb meal <strong>90–120 min before</strong> average 0.9s faster splits than eating under 60 min or over 150 min before.</p><span class="badge badge-green">High</span></div>
+          <div class="insight-meta">12 sessions · meal timing vs. avg split</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="sec" style="margin-bottom:18px;">Medium confidence</div>
+        <div class="insight">
+          <div class="insight-header"><p class="insight-text warn">Your <strong>3rd consecutive hard session</strong> shows a consistent drop-off of ~1.4s. Consider an easy day after every 2 high-RPE sessions.</p><span class="badge badge-amber">Medium</span></div>
+          <div class="insight-meta">6 sessions · consecutive load pattern</div>
+        </div>
+        <div class="insight">
+          <div class="insight-header"><p class="insight-text warn">Caffeine within <strong>60 min of start</strong> improves Rep 1–2 but worsens fade in Reps 4–6. Try extending lead time to 90–120 min.</p><span class="badge badge-amber">Medium</span></div>
+          <div class="insight-meta">8 sessions · caffeine timing vs. consistency</div>
+        </div>
+        <div class="insight">
+          <div class="insight-header"><p class="insight-text warn">Fastest sessions cluster when <strong>HRV is above 65ms</strong>. Avg HRV on best 5 sessions: 71ms vs. 57ms on slowest 5.</p><span class="badge badge-amber">Medium</span></div>
+          <div class="insight-meta">10 sessions · HRV vs. performance</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">This week</div>
+        <p style="font-size:13px;line-height:1.8;">Prioritize <strong style="font-weight:500;">7.5 hours of sleep</strong> before Thursday's session. Eat your carb meal 90–120 min before. Keep caffeine at least 2 hours out. HRV trend is positive — conditions are good.</p>
+      </div>
+    </div>
+
+    <!-- RACE GOAL -->
+    <div id="page-goal" class="page">
+      <div class="grid2" style="align-items:start;gap:24px;">
+        <div>
+          <div class="goal-hero">
+            <div class="goal-num">1:58.0</div>
+            <div class="goal-race">800m · State Championships · May 10</div>
+            <div class="goal-countdown">42 days away</div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-labels"><span>Start: 2:06.2</span><span>Now: 2:02.4</span><span>Goal: 1:58.0</span></div>
+            <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="progress-pct">64%</div>
+            <div class="progress-sub">of improvement achieved</div>
+          </div>
+          <div class="sec">VDOT training paces</div>
+          <div class="pace-grid" style="margin-bottom:0;">
+            <div class="pace-cell"><div class="pace-cell-label">Easy</div><div class="pace-cell-val">8:20–9:00</div></div>
+            <div class="pace-cell"><div class="pace-cell-label">Threshold</div><div class="pace-cell-val">6:38 /mi</div></div>
+            <div class="pace-cell"><div class="pace-cell-label">Interval 400m</div><div class="pace-cell-val">72–74s</div></div>
+            <div class="pace-cell"><div class="pace-cell-label">Rep 200m</div><div class="pace-cell-val">33–35s</div></div>
+            <div class="pace-cell"><div class="pace-cell-label">Goal 400m split</div><div class="pace-cell-val">59.0s</div></div>
+            <div class="pace-cell"><div class="pace-cell-label">VDOT</div><div class="pace-cell-val">52.1</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="sec">Periodization</div>
+          <div class="phases" style="margin-bottom:24px;">
+            <div class="phase" style="opacity:.5;"><div class="phase-wk">Wks 1–4</div><div class="phase-name">Base</div></div>
+            <div class="phase now"><div class="phase-wk">Wks 5–8</div><div class="phase-name">Build ←</div></div>
+            <div class="phase"><div class="phase-wk">Wks 9–11</div><div class="phase-name">Sharpen</div></div>
+            <div class="phase"><div class="phase-wk">Wk 12</div><div class="phase-name">Taper</div></div>
+          </div>
+          <div class="sec">Personal bests</div>
+          <div class="card" style="margin-bottom:24px;">
+            <div class="factor-row"><span class="factor-name">400m</span><div style="flex:1"></div><span style="font-family:var(--mono);font-size:15px;">51.8s</span><span style="font-size:11px;color:var(--muted);margin-left:10px;">Feb 2026</span></div>
+            <div class="factor-row"><span class="factor-name">800m</span><div style="flex:1"></div><span style="font-family:var(--mono);font-size:15px;">2:02.4</span><span style="font-size:11px;color:var(--muted);margin-left:10px;">Jan 2026</span></div>
+            <div class="factor-row"><span class="factor-name">1500m</span><div style="flex:1"></div><span style="font-family:var(--mono);font-size:15px;color:var(--muted);">4:18.7</span><span style="font-size:11px;color:var(--muted);margin-left:10px;">Nov 2025</span></div>
+            <div class="factor-row"><span class="factor-name">Mile</span><div style="flex:1"></div><span style="font-family:var(--mono);font-size:15px;color:var(--muted);">4:41.2</span><span style="font-size:11px;color:var(--muted);margin-left:10px;">Dec 2025</span></div>
+          </div>
+          <div class="sec">Projection to race day</div>
+          <div class="card"><div class="chart-wrap" style="height:150px;"><canvas id="projChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FACTORS LOG -->
+    <div id="page-factors" class="page">
+      <div class="grid2" style="align-items:start;gap:24px;">
+        <div>
+          <div class="form-sec">
+            <div class="form-sec-title">Sleep</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Hours</label><input class="form-input" type="number" step="0.5" value="7.5" id="f-sleep"></div>
+              <div class="form-group"><label class="form-label">Quality</label><select class="form-input"><option>Poor</option><option>Fair</option><option selected>Good</option><option>Excellent</option></select></div>
+              <div class="form-group"><label class="form-label">HRV (ms)</label><input class="form-input" type="number" value="68" id="f-hrv"></div>
+              <div class="form-group"><label class="form-label">Resting HR</label><input class="form-input" type="number" value="48"></div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Nutrition</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Water (L)</label><input class="form-input" type="number" step="0.1" value="2.5"></div>
+              <div class="form-group"><label class="form-label">Caffeine</label><select class="form-input"><option>None</option><option selected>1 coffee</option><option>2 coffees</option></select></div>
+              <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" value="240"></div>
+              <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" type="number" value="110"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="form-sec">
+            <div class="form-sec-title">Body &amp; mind</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Soreness (1–10)</label><input class="form-input" type="number" value="2" min="1" max="10" id="f-soreness"></div>
+              <div class="form-group"><label class="form-label">Stress (1–10)</label><input class="form-input" type="number" value="3" min="1" max="10" id="f-stress"></div>
+              <div class="form-group"><label class="form-label">Motivation (1–10)</label><input class="form-input" type="number" value="8" min="1" max="10" id="f-motiv"></div>
+              <div class="form-group"><label class="form-label">Legs feel</label><select class="form-input"><option>Dead</option><option>Heavy</option><option selected>Fresh</option><option>Bouncy</option></select></div>
+            </div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">Form score</div>
+            <div class="card" style="display:flex;align-items:center;gap:20px;padding:20px 24px;">
+              <div style="font-family:var(--mono);font-size:52px;font-weight:300;line-height:1;" id="score-num">82</div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--green);" id="score-label">Ready to train</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.6;">Good sleep · low soreness<br>moderate stress</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-dark" style="width:100%;justify-content:center;padding:10px 0;margin-top:14px;" onclick="showToast('Factors saved.')">Save factors</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="m-title"></div>
+    <div class="modal-sub" id="m-sub"></div>
+    <div class="modal-chips" id="m-chips"></div>
+    <div class="modal-note" id="m-note"></div>
+    <div style="margin-top:18px;display:flex;gap:8px;">
+      <button class="btn btn-dark" style="flex:1;justify-content:center;" onclick="showToast('Added to this week.');closeModal()">Add to week</button>
+      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+const sessions = [
+  { date:'Mar 16', name:'6×400m Intervals',       splits:[62.1,61.4,61.0,61.7,62.8,63.9], sleep:7.2, hrv:64, stress:4, fade:2.9 },
+  { date:'Mar 12', name:'4×600m Speed Endurance',  splits:[89.8,88.9,89.4,91.0],           sleep:7.8, hrv:71, stress:2, fade:1.2 },
+  { date:'Mar 9',  name:'5K Tempo Run',             splits:[],                               sleep:6.5, hrv:58, stress:6, fade:null },
+  { date:'Mar 5',  name:'8×200m Reps',              splits:[29.1,28.8,28.6,28.9,29.3,29.7,30.0,30.4], sleep:7.5, hrv:69, stress:3, fade:1.3 },
+  { date:'Mar 2',  name:'6×400m Intervals',         splits:[63.5,62.8,62.4,63.1,64.2,66.0], sleep:5.9, hrv:54, stress:7, fade:3.6 },
+];
+
+const workouts = {
+  w1:{ title:'Speed Endurance 600s',   sub:'Interval · Build · Jack Daniels',     chips:[{l:'Reps',v:'3–4'},{l:'Target',v:'1:28–1:30'},{l:'Rest',v:'3 min'}],          note:'Warm up 1.5–2 miles easy. Each 600m at goal 800m race pace — not faster. If Rep 3 is 2s+ slower than Rep 1, you went out too hard. Cool down 1 mile easy.' },
+  w2:{ title:'Lactate Threshold 1200s',sub:'Tempo · Base/Build · Lydiard',        chips:[{l:'Reps',v:'3'},{l:'Target',v:'4:48–5:00'},{l:'Rest',v:'90 sec'}],            note:'Conversationally uncomfortable — a few words, not full sentences. All three reps at the same pace. This is not a time trial. Total quality volume: 3600m.' },
+  w3:{ title:'Race Pace 200m Reps',    sub:'Reps · Sharpen · Bowerman',           chips:[{l:'Reps',v:'8–10'},{l:'Target',v:'28–29s'},{l:'Rest',v:'2 min walk'}],       note:'Full walk recovery so every rep is genuinely fast. Stop if you drop more than 1.5s from target — quality over quantity.' },
+  w4:{ title:'Broken 800 Simulation',  sub:'Interval · Peak · Custom AI',         chips:[{l:'Structure',v:'400+200+200'},{l:'400m',v:'58.5s'},{l:'Rest',v:'60 sec'}],  note:'Mental and physical race rehearsal. Hit the 400 at your target first-lap pace. 60 sec rest. 200m at goal split. 60 sec rest. Final 200 — push. Best done 7–10 days before race day.' },
+  w5:{ title:'Strides & Acceleration', sub:'Drills · All phases · Daniels/Canova',chips:[{l:'Reps',v:'6'},{l:'Distance',v:'80–100m'},{l:'Effort',v:'90–95%'}],         note:'Full recovery between each. Add onto an easy run or do standalone. One of the best bang-for-buck workouts in middle-distance training.' },
+};
+
+const meta = {
+  dashboard:{ title:'Dashboard',       sub:'Wednesday, March 18' },
+  log:      { title:'Log workout',     sub:'Record your session and wellness factors' },
+  library:  { title:'Workout library', sub:'800m focus · VDOT 52' },
+  history:  { title:'History',         sub:'24 sessions logged' },
+  insights: { title:'AI insights',     sub:'7 patterns found across 8 weeks' },
+  goal:     { title:'Race goal',       sub:'800m · State Championships · May 10' },
+  factors:  { title:'Factors log',     sub:'Log today\'s wellness data' },
+};
+
+document.querySelectorAll('.nav-link').forEach(el => el.addEventListener('click', () => showPage(el.dataset.page)));
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector(`.nav-link[data-page="${id}"]`).classList.add('active');
+  document.getElementById('t-title').textContent = meta[id].title;
+  document.getElementById('t-sub').textContent = meta[id].sub;
+  if (id === 'history') renderHistory();
+  if (id === 'goal') setTimeout(() => document.getElementById('prog-fill').style.width = '64%', 80);
+  if (['dashboard','history','goal'].includes(id)) setTimeout(initCharts, 80);
+}
+
+document.addEventListener('click', e => {
+  const p = e.target.closest('.pill');
+  if (!p || !p.dataset.g) return;
+  document.querySelectorAll(`.pill[data-g="${p.dataset.g}"]`).forEach(x => x.classList.remove('on'));
+  p.classList.add('on');
+});
+
+function renderHistory() {
+  document.getElementById('history-list').innerHTML = sessions.map(s => `
+    <div class="session">
+      <div class="session-top"><span class="session-name">${s.name}</span><span class="session-date">${s.date}</span></div>
+      <div class="session-meta">Sleep ${s.sleep}h · HRV ${s.hrv}ms · Stress ${s.stress}/10${s.fade ? ` · Fade <span style="color:${s.fade<2?'var(--green)':s.fade<3?'var(--amber)':'var(--red)'}">${s.fade}s</span>` : ''}</div>
+      ${s.splits.length ? `<div class="session-splits">${s.splits.map((v,i)=>`<span class="ssplit">R${i+1} ${v}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
+
+let charts = {};
+function initCharts() {
+  Chart.defaults.color = '#4d5a6a';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1e232b', titleColor:'#f0f2f5', bodyColor:'#4d5a6a', padding:10, borderColor:'rgba(255,255,255,0.1)', borderWidth:1 } },
+    scales:{
+      x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{family:'DM Sans',size:11}} },
+      y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{family:'DM Sans',size:11}} },
+    },
+  };
+  if (!charts.trend) {
+    const el = document.getElementById('trendChart');
+    if (el) charts.trend = new Chart(el, { type:'line', data:{ labels:['Jan W1','Jan W3','Feb W1','Feb W2','Feb W3','Mar W1','Mar W2','Now'], datasets:[{ data:[65.8,65.2,64.8,64.3,63.7,63.1,62.5,62.1], borderColor:'#00e896', borderWidth:1.5, pointBackgroundColor:'#00e896', pointRadius:3, tension:0.4, fill:{target:'origin',above:'rgba(0,232,150,0.04)'} }] }, options:{...base, scales:{...base.scales, y:{...base.scales.y, reverse:true, ticks:{callback:v=>v+'s', font:{family:'DM Mono',size:10}}}}} });
+  }
+  if (!charts.fitness) {
+    const el = document.getElementById('fitnessChart');
+    if (el) charts.fitness = new Chart(el, { type:'line', data:{ labels:['Jan','Feb','Mar','Apr (proj)','May (proj)'], datasets:[ {label:'Actual',data:[126.2,124.1,122.4,null,null],borderColor:'#00e896',borderWidth:1.5,pointBackgroundColor:'#00e896',pointRadius:4,tension:0.3}, {label:'Projected',data:[null,null,122.4,120.2,118.0],borderColor:'rgba(0,232,150,0.35)',borderDash:[4,4],borderWidth:1.5,pointRadius:3,tension:0.3} ] }, options:{...base, plugins:{...base.plugins,legend:{display:true,labels:{color:'#4d5a6a',font:{size:11,family:'DM Sans'},boxWidth:16,padding:12}}}, scales:{...base.scales,y:{...base.scales.y,reverse:true,ticks:{callback:v=>{const m=Math.floor(v/60),s=(v%60).toFixed(1);return m+':'+(s<10?'0':'')+s;},font:{family:'DM Mono',size:10}}}}} });
+  }
+  if (!charts.proj) {
+    const el = document.getElementById('projChart');
+    if (el) charts.proj = new Chart(el, { type:'line', data:{ labels:['Now','Wk 2','Wk 4','Taper','Race'], datasets:[{ data:[122.4,121.0,119.8,118.6,118.0], borderColor:'#00e896', borderWidth:1.5, pointBackgroundColor:['#00e896','#4d5a6a','#4d5a6a','#4d5a6a','#f5a623'], pointRadius:[4,3,3,3,5], tension:0.3 }] }, options:{...base, scales:{...base.scales,y:{...base.scales.y,reverse:true,ticks:{callback:v=>{const m=Math.floor(v/60),s=(v%60).toFixed(1);return m+':'+(s<10?'0':'')+s;},font:{family:'DM Mono',size:10}}}}} });
+  }
+}
+
+function openModal(id) {
+  const w = workouts[id]; if (!w) return;
+  document.getElementById('m-title').textContent = w.title;
+  document.getElementById('m-sub').textContent = w.sub;
+  document.getElementById('m-chips').innerHTML = w.chips.map(c=>`<div class="modal-chip"><div class="modal-chip-label">${c.l}</div><div class="modal-chip-val">${c.v}</div></div>`).join('');
+  document.getElementById('m-note').textContent = w.note;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
+
+function calcScore() {
+  const sleep = parseFloat(document.getElementById('f-sleep')?.value)||7;
+  const hrv   = parseFloat(document.getElementById('f-hrv')?.value)||65;
+  const stress = parseFloat(document.getElementById('f-stress')?.value)||5;
+  const soreness = parseFloat(document.getElementById('f-soreness')?.value)||3;
+  const motiv = parseFloat(document.getElementById('f-motiv')?.value)||7;
+  const s = Math.round(Math.min(100,(sleep/8.5)*100)*0.3+Math.min(100,(hrv/80)*100)*0.25+((10-stress)/9*100)*0.2+((10-soreness)/9*100)*0.15+(motiv/10*100)*0.1);
+  document.getElementById('score-num').textContent = s;
+  document.getElementById('nav-score').textContent = s;
+  const label = document.getElementById('score-label');
+  if (s>=85){label.textContent='Excellent — push hard';label.style.color='var(--green)';}
+  else if(s>=70){label.textContent='Ready to train';label.style.color='var(--green)';}
+  else if(s>=55){label.textContent='Train with caution';label.style.color='var(--amber)';}
+  else{label.textContent='Consider easy day';label.style.color='var(--red)';}
+}
+document.querySelectorAll('#page-factors input,#page-factors select').forEach(el=>el.addEventListener('input',calcScore));
+
+function showToast(msg) {
+  const t = document.getElementById('toast-el');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+initCharts();
+</script>
+</body>
+</html>
